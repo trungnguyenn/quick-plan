@@ -54,7 +54,7 @@
               "stepId": null,
               "stepOrder": 1,
               "childStepId": null,
-              "description": null,
+              "description": "faster!",
               "stepType": {
                 "stepTypeId": 3,
                 "stepTypeKey": "interval"

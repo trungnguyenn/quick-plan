@@ -16,7 +16,7 @@ class WorkoutSpec extends WordSpec with Matchers {
     - recover: 01:30 @ z2
   - cooldown: lap-button
    */
-  val testWO = "running: run-fast\n- warmup: 10:00\n- repeat: 2\n  - run: 1500m @ 4:30-5:00\n  - recover: 01:30 @ z2\n- cooldown: lap-button"
+  val testWO = "running: run-fast\n- warmup: 10:00\n- repeat: 2\n  - run: 1500m @ 4:30-5:00 #faster!\n  - recover: 01:30 @ z2\n- cooldown: lap-button"
 
   "Workout parser" should {
 
@@ -36,7 +36,7 @@ class WorkoutSpec extends WordSpec with Matchers {
           RepeatStep(
             2,
             Seq(
-              IntervalStep(DistanceDuration(1500, m), Some(PaceTarget(Pace(msys.distance, "4:30"), Pace(msys.distance, "5:00")))),
+              IntervalStep(DistanceDuration(1500, m), Some(PaceTarget(Pace(msys.distance, "4:30"), Pace(msys.distance, "5:00"))), "faster!"),
               RecoverStep(TimeDuration(1, 30), Some(HrZoneTarget(2)))
             )
           ),

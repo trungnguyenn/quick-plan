@@ -11,6 +11,7 @@ trait Step {
 abstract class DurationStep(override val `type`: String, override val typeId: Int) extends Step {
   def duration: Duration
   def target: Option[Target]
+  def description: String
 
   def json(order: Int): JsObject =
     Json.obj(
@@ -18,18 +19,18 @@ abstract class DurationStep(override val `type`: String, override val typeId: In
       "stepId" -> JsNull,
       "stepOrder" -> order,
       "childStepId" -> JsNull,
-      "description" -> JsNull,
+      "description" -> description,
       "stepType" -> Json.obj("stepTypeId" -> typeId, "stepTypeKey" -> `type`)
     ) ++ duration.json ++ target.fold(NoTarget.json)(_.json)
 }
 
-case class WarmupStep(duration: Duration, target: Option[Target] = None) extends DurationStep("warmup", 1)
+case class WarmupStep(duration: Duration, target: Option[Target] = None, description: String = null) extends DurationStep("warmup", 1)
 
-case class CooldownStep(duration: Duration, target: Option[Target] = None) extends DurationStep("cooldown", 2)
+case class CooldownStep(duration: Duration, target: Option[Target] = None, description: String = null) extends DurationStep("cooldown", 2)
 
-case class IntervalStep(duration: Duration, target: Option[Target] = None) extends DurationStep("interval", 3)
+case class IntervalStep(duration: Duration, target: Option[Target] = None, description: String = null) extends DurationStep("interval", 3)
 
-case class RecoverStep(duration: Duration, target: Option[Target] = None) extends DurationStep("recovery", 4)
+case class RecoverStep(duration: Duration, target: Option[Target] = None, description: String = null) extends DurationStep("recovery", 4)
 
 case class RepeatStep(count: Int, steps: Seq[Step]) extends Step {
   override def `type` = "repeat"
@@ -58,7 +59,7 @@ object Step {
 
       val StepRx = raw"""^(\s{$indent}-\s\w*:\s.*)(([\r\n]+\s{1,}-\s.*)*)$$""".r
       val StepHeader = raw"""^\s{$indent}-\s*(\w*):(.*)$$""".r
-      val ParamsRx = """^([\w-\.:\s]+)\s*(@(.*))?$""".r
+      val ParamsRx = """^([\w-\.:\s]+)\s*(@([^#]+))?\s*(#(.+))?$""".r
 
       def parseDurationStep(x: String)(implicit msys: MeasurementSystems.MeasurementSystem): DurationStep = x match {
         case StepHeader(name, params) =>
@@ -72,10 +73,10 @@ object Step {
         case _ => throw new IllegalArgumentException(s"Cannot parse duration step: $x")
       }
 
-      def expect(x: String)(implicit msys: MeasurementSystems.MeasurementSystem): (Duration, Option[Target]) = x.trim match {
-        case ParamsRx(duration, _, target) =>
+      def expect(x: String)(implicit msys: MeasurementSystems.MeasurementSystem): (Duration, Option[Target], String) = x.trim match {
+        case ParamsRx(duration, _, target, _, description) =>
           val maybeTarget = Option(target).filter(_.trim.nonEmpty).map(Target.parse)
-          (Duration.parse(duration.trim), maybeTarget)
+          (Duration.parse(duration.trim), maybeTarget, description)
         case raw => throw new IllegalArgumentException(s"Cannot parse step parameters $raw")
       }
 
